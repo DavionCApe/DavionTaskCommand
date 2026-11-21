@@ -3,6 +3,7 @@ package com.davion.taskcommand
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -67,6 +68,8 @@ class MainActivity : ComponentActivity() {
 private fun JarvisTaskApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("jarvis_tasks", 0) }
+    val tts = remember { TextToSpeech(context) { } }
+    DisposableEffect(tts) { onDispose { tts.shutdown() } }
     val tasks = remember {
         mutableStateListOf<TaskItem>().apply {
             try {
@@ -116,6 +119,7 @@ private fun JarvisTaskApp() {
             lower == "home" || lower.contains("go home") -> { page = "HOME"; status = "HOME DISPLAYED" }
             else -> status = "COMMAND RECEIVED • TRY “ADD TASK …”"
         }
+        tts.speak(status, TextToSpeech.QUEUE_FLUSH, null, "jarvis-response")
     }
 
     val voiceLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
