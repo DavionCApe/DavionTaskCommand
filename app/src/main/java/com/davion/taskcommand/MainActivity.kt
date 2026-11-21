@@ -170,3 +170,41 @@ private fun DavionTaskApp() {
         tts.speak(reply, TextToSpeech.QUEUE_FLUSH, null, "davion-response")
     }
 
+
+@Composable
+private fun HudBackdrop(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "hud-scan")
+    val sweep by transition.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(5200), RepeatMode.Restart),
+        label = "scan-position"
+    )
+    Canvas(modifier) {
+        val step = 34.dp.toPx()
+        var x = 0f
+        while (x < size.width) {
+            drawLine(Color(0xFF2AAAC2).copy(alpha = .055f), Offset(x, 0f), Offset(x, size.height), 1f)
+            x += step
+        }
+        var y = 0f
+        while (y < size.height) {
+            drawLine(Color(0xFF2AAAC2).copy(alpha = .045f), Offset(0f, y), Offset(size.width, y), 1f)
+            y += step
+        }
+        val scanY = size.height * sweep
+        drawLine(Cyan.copy(alpha = .11f), Offset(0f, scanY), Offset(size.width, scanY), 2.dp.toPx())
+        val inset = 12.dp.toPx()
+        val arm = 24.dp.toPx()
+        val corners = listOf(
+            Offset(inset, inset), Offset(size.width - inset, inset),
+            Offset(inset, size.height - inset), Offset(size.width - inset, size.height - inset)
+        )
+        corners.forEachIndexed { index, p ->
+            val sx = if (index % 2 == 0) 1f else -1f
+            val sy = if (index < 2) 1f else -1f
+            drawLine(Cyan.copy(alpha = .32f), p, Offset(p.x + arm * sx, p.y), 2.dp.toPx())
+            drawLine(Cyan.copy(alpha = .32f), p, Offset(p.x, p.y + arm * sy), 2.dp.toPx())
+        }
+        drawCircle(Cyan.copy(alpha = .07f), size.minDimension * .39f, Offset(size.width / 2, size.height * .43f), style = Stroke(width = 1.dp.toPx()))
+    }
+}
