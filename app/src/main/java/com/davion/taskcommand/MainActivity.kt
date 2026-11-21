@@ -171,6 +171,205 @@ private fun DavionTaskApp() {
     }
 
 
+    val speechLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val spoken = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+        if (!spoken.isNullOrBlank()) runCommand(spoken)
+        else status = "VOICE INPUT NOT RECEIVED"
+    }
+
+    Box(Modifier.fillMaxSize().background(Night)) {
+        HudBackdrop(Modifier.fillMaxSize())
+        Column(
+            Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("DAVION", color = Ice, fontSize = 26.sp, fontWeight = FontWeight.Black)
+                    Text("AI TASK COMMAND  /  $page", color = Muted, fontSize = 11.sp)
+                }
+                Surface(color = Panel, shape = RoundedCornerShape(20.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Cyan.copy(alpha = .55f))) {
+                    Text("● SYSTEM ONLINE", Modifier.padding(horizontal = 12.dp, vertical = 8.dp), color = Cyan, fontSize = 10.sp)
+                }
+            }
+            Text(status, color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("HOME", "TASKS", "DAVION AI", "ANALYTICS").forEach { destination ->
+                    Text(
+                        destination,
+                        Modifier.clip(RoundedCornerShape(12.dp))
+                            .background(if (page == destination) Cyan.copy(alpha = .22f) else Panel)
+                            .border(1.dp, if (page == destination) Cyan else Muted.copy(alpha = .25f), RoundedCornerShape(12.dp))
+                            .clickable { page = destination }
+                            .padding(horizontal = 10.dp, vertical = 9.dp),
+                        color = if (page == destination) Ice else Muted,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            when (page) {
+                "DAVION AI" -> {
+                    Text("COMMAND INTERFACE", color = Ice, fontWeight = FontWeight.Bold)
+                    LazyColumn(
+                        Modifier.weight(1f).fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(Panel.copy(alpha = .88f))
+                            .border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(18.dp))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(chatMessages) { message ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = if (message.fromUser) Arrangement.End else Arrangement.Start) {
+                                Text(
+                                    message.text,
+                                    Modifier.widthIn(max = 290.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (message.fromUser) Cyan.copy(alpha = .2f) else Color(0xFF10283A))
+                                        .padding(12.dp),
+                                    color = Ice,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = chatInput, onValueChange = { chatInput = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Message Davion...", color = Muted) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Ice, unfocusedTextColor = Ice,
+                                focusedBorderColor = Cyan, unfocusedBorderColor = Muted,
+                                cursorColor = Cyan
+                            )
+                        )
+                        IconButton(onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Talk to Davion")
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-ZA")
+                            }
+                            try { speechLauncher.launch(intent) } catch (_: Exception) { status = "SPEECH SERVICE UNAVAILABLE" }
+                        }) { Icon(Icons.Default.Mic, contentDescription = "Speak to Davion", tint = Cyan) }
+                        IconButton(onClick = { runCommand(chatInput); chatInput = "" }) {
+                            Icon(Icons.Default.Add, contentDescription = "Send message", tint = Cyan)
+                        }
+                    }
+                }
+                "TASKS" -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("YOUR TASKS", Modifier.weight(1f), color = Ice, fontWeight = FontWeight.Bold)
+                        Button(onClick = { showAdd = true }) { Icon(Icons.Default.Add, contentDescription = null); Text(" Add") }
+                    }
+                    LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(tasks) { task ->
+                            Row(
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Panel)
+                                    .border(1.dp, Cyan.copy(alpha = .22f), RoundedCornerShape(14.dp)).padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(checked = task.done, onCheckedChange = { checked ->
+                                    val index = tasks.indexOfFirst { it.id == task.id }
+                                    if (index >= 0) tasks[index] = task.copy(done = checked)
+                                    persist()
+                                })
+                                Column(Modifier.weight(1f)) {
+                                    Text(task.title, color = Ice)
+                                    Text(task.priority.uppercase(), color = Muted, fontSize = 10.sp)
+                                }
+                                IconButton(onClick = { tasks.removeAll { it.id == task.id }; persist() }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Delete task", tint = Muted)
+                                }
+                            }
+                        }
+                    }
+                }
+                "ANALYTICS" -> {
+                    Text("MISSION ANALYTICS", color = Ice, fontWeight = FontWeight.Bold)
+                    Text("TOTAL TASKS   ${tasks.size}", color = Cyan, fontSize = 20.sp)
+                    Text("COMPLETED   ${tasks.count { it.done }}", color = Ice, fontSize = 18.sp)
+                    Text("OPEN   ${tasks.count { !it.done }}", color = Ice, fontSize = 18.sp)
+                    Spacer(Modifier.weight(1f))
+                }
+                else -> {
+                    Text("COMMAND DECK", color = Ice, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("Your day. Your priorities. One intelligent command centre.", color = Muted)
+                    Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                Modifier.size(190.dp).clip(CircleShape)
+                                    .border(2.dp, Cyan.copy(alpha = .7f), CircleShape)
+                                    .background(Brush.radialGradient(listOf(Cyan.copy(alpha = .3f), Color.Transparent))),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("D", color = Ice, fontSize = 76.sp, fontWeight = FontWeight.Black)
+                            }
+                            Spacer(Modifier.height(14.dp))
+                            Text("DAVION AI CORE", color = Cyan, fontWeight = FontWeight.Bold)
+                            Text("READY FOR YOUR COMMAND", color = Muted, fontSize = 11.sp)
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        listOf("TASKS", "DAVION AI", "ANALYTICS").forEach { destination ->
+                            Button(onClick = { page = destination }, modifier = Modifier.weight(1f)) {
+                                Text(destination, fontSize = 10.sp)
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Talk to Davion")
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-ZA")
+                            }
+                            try { speechLauncher.launch(intent) } catch (_: Exception) { status = "SPEECH SERVICE UNAVAILABLE" }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Icon(Icons.Default.Mic, contentDescription = null); Text("  SPEAK TO DAVION") }
+                }
+            }
+        }
+        if (showAdd) {
+            AlertDialog(
+                onDismissRequest = { showAdd = false },
+                title = { Text("Create task") },
+                text = {
+                    Column {
+                        OutlinedTextField(value = newTask, onValueChange = { newTask = it }, label = { Text("Task name") })
+                        Spacer(Modifier.height(8.dp))
+                        Text("Priority", color = Muted)
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            listOf("Low", "Normal", "High", "Critical").forEach { level ->
+                                Text(level, Modifier.clip(RoundedCornerShape(8.dp))
+                                    .background(if (priority == level) Cyan.copy(alpha = .2f) else Panel)
+                                    .clickable { priority = level }.padding(7.dp), color = Ice, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (newTask.isNotBlank()) {
+                            tasks.add(TaskItem(System.currentTimeMillis(), newTask.trim(), priority))
+                            persist()
+                            newTask = ""
+                            priority = "Normal"
+                            showAdd = false
+                        }
+                    }) { Text("SAVE") }
+                },
+                dismissButton = { TextButton(onClick = { showAdd = false }) { Text("CANCEL") } }
+            )
+        }
+    }
+
+}
+
 @Composable
 private fun HudBackdrop(modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "hud-scan")
