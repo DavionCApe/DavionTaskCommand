@@ -1,29 +1,28 @@
-# JARVIS TASK COMMAND
+# DAVION AI TASK COMMAND
 
-A standalone Android task manager with a futuristic JARVIS-inspired command interface.
+A standalone Android task manager with a futuristic holographic command interface and a conversational voice assistant.
 
-## Current build
-- Android application (Kotlin + Jetpack Compose), min Android 8.0 (API 26).
-- Dark holographic reactor home screen with touch-to-open module navigation.
-- Task creation, priority selection, completion, deletion and local persistence.
-- English voice-command input through the Android speech-recognition service.
-- Spoken status feedback through Android Text-to-Speech.
-- Basic task metrics and analytics screen.
-- GitHub Actions builds a debug APK and uploads it as `DavionTaskCommand-APK`.
+## Current implementation
+- Kotlin + Jetpack Compose Android app, minimum Android 8.0 (API 26).
+- Animated holographic HUD grid, scanning sweep, reactor-style command core and floating module tiles.
+- Davion AI chat screen with conversation bubbles, text input, voice input and spoken replies.
+- Local task creation, priority selection, completion, deletion and persistent storage.
+- Task totals, completion metrics and module navigation.
+- GitHub Actions debug APK build; artifact name: `DavionTaskCommand-APK`.
 
-## Voice commands
-Try phrases such as:
+## Davion assistant commands
 - "Add task buy groceries"
 - "Create task phone the dentist"
 - "Show my tasks"
 - "Open schedule"
 - "Show analytics"
 - "Go home"
+- "Help"
 
-Voice recognition availability and whether recognition works offline depend on the speech services installed and configured on the Android device. The app stores tasks locally; the current version does not include a bundled offline large-language model or cloud AI backend.
+The assistant provides conversational, spoken responses for the commands implemented in this build. Its current understanding is local and intent-based; it is not yet connected to a generative AI model or online AI service. Speech recognition availability and offline operation depend on the speech service installed on the Android device.
 
-## Build
-The workflow at `.github/workflows/android.yml` builds with JDK 17, Gradle 8.9 and Android Gradle Plugin 8.7.3. Open the repository's **Actions** tab and select the latest successful run to download the `DavionTaskCommand-APK` artifact.
+## Build APK
+Open the repository's **Actions** tab and download the `DavionTaskCommand-APK` artifact from the latest successful workflow run.
 
-## Planned next modules
-Calendar/deadline scheduling, recurring tasks, reminders/notifications, subtasks, project workspaces, backup/restore, and optional online AI integration are not yet implemented in this first build.
+## Still planned
+Full generative AI chat (online provider integration), a bundled offline language model, calendar and deadline scheduling, recurring tasks, timed notifications, subtasks, project workspaces, and backup/restore are not included in this build yet.
