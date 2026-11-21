@@ -196,7 +196,7 @@ private fun DavionTaskApp() {
             }
             Text(status, color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("HOME", "TASKS", "DAVION AI", "ANALYTICS").forEach { destination ->
+                listOf("HOME", "TASKS", "DAVION AI", "AI STUDIO", "ANALYTICS").forEach { destination ->
                     Text(
                         destination,
                         Modifier.clip(RoundedCornerShape(12.dp))
@@ -211,6 +211,7 @@ private fun DavionTaskApp() {
                 }
             }
             when (page) {
+                "AI STUDIO" -> { AiStudioScreen() }
                 "DAVION AI" -> {
                     Text("COMMAND INTERFACE", color = Ice, fontWeight = FontWeight.Bold)
                     LazyColumn(
